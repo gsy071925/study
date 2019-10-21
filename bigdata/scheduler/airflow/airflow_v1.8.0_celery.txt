@@ -1,0 +1,80 @@
+# 使用nfs进行挂载，同步airflow dag文件
+## 服务端（如：10.206.19.183）
+1.安装工具
+yum -y install nfs-utils
+yum -y install rpcbind
+增加同步文件设置
+vim /etc/exports
+/root/airflow/dags 10.206.19.189(rw,no_root_squash,no_all_squash,sync)
+启动服务
+systemctl start rpcbind.service 或 service rpcbind start
+systemctl start nfs.service 或 service nfs start
+生效/刷新配置
+exportfs -a
+2.修改文件目录(airflow dags目录调整)
+mv /root/airflow/dags /data/wwwroot/airflow_dags
+chmod 777 /data/wwwroot/airflow_dags
+ln -s /data/wwwroot/airflow_dags /root/airflow/dags
+
+## 客户端（如：10.206.19.189）
+1.安装工具
+yum -y install nfs-utils
+yum -y install rpcbind
+启动服务
+systemctl start rpcbind.service 或 service rpcbind start
+systemctl start nfs.service 或 service nfs start
+2.挂载文件目录
+mkdir /mnt/airflow_dags
+mount -t nfs 10.206.19.183:/data/wwwroot/airflow_dags /mnt/airflow_dags
+ln -s /mnt/airflow_dags /root/airflow/dags
+3.验证
+ls /root/airflow/dags
+
+
+# 修改Airflow
+1.安装依赖
+pip install airflow[celery]==1.8.0
+pip install pandas
+pip install celery
+pip install celery[redis]
+
+
+2.修改/root/airflow/airflow.cfg
+[core]
+airflow_home = /root/airflow
+dags_folder = /data/wwwroot/airflow_dags
+base_log_folder = /data/logs/airflow
+executor = CeleryExecutor
+sql_alchemy_conn=mysql://airflow:airflow@10.206.19.181:3306/airflow_v190
+dags_are_paused_at_creation = False
+load_examples = False
+[celery]
+# beoker用mysql
+broker_url = sqla+mysql://root:EMRroot1234@10.206.19.181:3306/airflow_v190
+celery_result_backend = db+mysql://root:EMRroot1234@10.206.19.181:3306/airflow
+# beoker用redis则如下
+broker_url = redis://10.206.19.189:6379/1
+celery_result_backend = db+mysql://root:EMRroot1234@10.206.19.181:3306/airflow
+[scheduler]
+max_threads = 4
+
+3.修改/home/www/airflow/airflow.cfg
+主要为airflow celery worker使用www启动，可以将/root/airflow/airflow.cfg覆盖过来，修改下
+airflow_home = /home/www/airflow
+
+4.重启airflow服务
+服务端（master）
+airflow webserver -p 8070 -D
+sudo -u www airflow worker -D --stdout /data/logs/airflow/airflow-worker.out --stderr /data/logs/airflow/airflow-worker.err -l /data/logs/airflow/airflow-worker.log
+airflow scheduler -D --stdout /data/logs/airflow/airflow-scheduler.out --stderr /data/logs/airflow/airflow-scheduler.err -l /data/logs/airflow/airflow-scheduler.log
+
+客户端（flower）
+sudo -u www airflow worker -D --stdout /data/logs/airflow/airflow-worker.out --stderr /data/logs/airflow/airflow-worker.err -l /data/logs/airflow/airflow-worker.log
+sudo -u www airflow worker -D -q my_queue --stdout /data/logs/airflow/airflow-worker.out --stderr /data/logs/airflow/airflow-worker.err -l /data/logs/airflow/airflow-worker.log
+亦可在airflow.cfg里面指定：default_queue = my_queue
+airflow flower -D --stdout /data/logs/airflow/airflow-flower.out --stderr /data/logs/airflow/airflow-flower.err -l /data/logs/airflow/airflow-flower.log
+
+
+# airflow-api
+可以修改为www用户启动，将dags的路径修改为
+filter.airflow.dags=/data/wwwroot/airflow_dags

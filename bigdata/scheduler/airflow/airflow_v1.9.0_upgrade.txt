@@ -1,0 +1,81 @@
+停止airflow服务
+kill ...
+
+安装依赖
+yum install libffi-devel
+pip install --upgrade pip enum34
+pip install paramiko
+
+卸载历史版本
+pip uninstall airflow
+
+更新airflow
+pip install apache-airflow==1.9.0
+pip install apache-airflow[mysql]==1.9.0
+pip install apache-airflow[crypto]==1.9.0
+pip install apache-airflow[celery]==1.8.0
+pip install pandas
+pip install celery
+
+修改数据库脚本
+vim /usr/lib/python2.7/site-packages/airflow/migrations/versions/4addfa1236f1_add_fractional_seconds_to_mysql_tables.py
+"fsp=6" 替换为 ""；在vim下使用一下命令 :%s/fsp=6//gc
+
+日志中文乱码解决：
+修改下面文件 /usr/local/python2.7.11/lib/python2.7/site-packages/airflow/task_runner/base_task_runner.py 95行
+self.logger.info('Subtask: {}'.format(line.rstrip('\n'))) - > self.logger.info(u'Subtask: {}'.format(line.rstrip('\n')))
+
+更新数据库
+airflow upgradedb
+
+修改airflow.cfg
+[core]
+executor = CeleryExecutor
+sql_alchemy_conn=mysql://airflow:airflow@10.206.19.181:3306/airflow_v190
+dags_are_paused_at_creation = False
+load_examples = False
+[celery]
+# beoker用mysql
+broker_url = sqla+mysql://root:EMRroot1234@10.206.19.181:3306/airflow_v190
+celery_result_backend = db+mysql://root:EMRroot1234@10.206.19.181:3306/airflow_v190
+# beoker用redis则如下
+broker_url = redis://127.0.0.1:6379/5
+celery_result_backend = redis://127.0.0.1:6379/6
+
+重启airflow服务
+airflow webserver -p 8070 -D
+airflow scheduler -D --stdout /data/logs/airflow/airflow-scheduler.out --stderr /data/logs/airflow/airflow-scheduler.err -l /data/logs/airflow/airflow-scheduler.log
+airflow worker -D --stdout /data/logs/airflow/airflow-worker.out --stderr /data/logs/airflow/airflow-worker.err -l /data/logs/airflow/airflow-worker.log
+
+
+使用nfs进行挂载，同步airflow dag文件
+服务端
+1.安装工具
+yum -y install nfs-utils
+yum -y install rpcbind
+增加同步文件设置
+vim /etc/exports
+/root/airflow/dags 10.206.19.189(rw,no_root_squash,no_all_squash,sync)
+启动服务
+systemctl start rpcbind.service 或 service rpcbind start
+systemctl start nfs.service 或 service nfs start
+生效/刷新配置
+exportfs -a
+2.修改文件目录
+mv /root/airflow/dags /data/wwwroot/airflow_dags
+chmod 777 /data/wwwroot/airflow_dags
+ln -s /data/wwwroot/airflow_dags /root/airflow/dags
+
+客户端
+1.安装工具
+yum -y install nfs-utils
+yum -y install rpcbind
+启动服务
+systemctl start rpcbind.service 或 service rpcbind start
+systemctl start nfs.service 或 service nfs start
+2.挂载文件目录
+mkdir /mnt/airflow_dags
+mount -t nfs 10.206.19.183:/data/wwwroot/airflow_dags /mnt/airflow_dags
+ln -s /mnt/airflow_dags /root/airflow/dags
+3.验证
+ls /root/airflow/dags

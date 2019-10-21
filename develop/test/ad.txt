@@ -1,0 +1,14 @@
+﻿ab网站压力测试命令
+格式： ./ab [options] [http://]hostname[:port]/path
+-n 测试会话中所执行的请求个数，默认时，仅执行一个请求
+-c 一次产生的请求个数。默认是一次一个
+-t 测试所进行的最大秒数
+-v 设置显示信息的详细程度 - 4或更大值会显示头信息， 3或更大值可以显示响应代码(404, 200等), 2或更大值可以显示警告和其他信息。 -V 显示版本号并退出。
+4个比较长用的参数 若有其他需要man下吧
+一般工作中我们只用-n 和 -c：
+例：./ab -c 100 -n 1000 http://mis.gsy.com/demo/index.jsp
+-n 1000 表示总请求数为1000
+-c 10 表示并发用户数为10
+http://127.0.0.1/index.php 表示这些请求的目标url
+
+ab -c 100 -n 1000 http://10.204.79.224:9101/websocket?package=cn.nubia.neoshop&app_key=46e7e0cba89648b8ac8d2bad4cb8d4b2&identity=13400503105

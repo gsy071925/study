@@ -1,0 +1,39 @@
+﻿Session共享
+1.使用memcache共享
+1.1将这5个包放到$TOMCAT_HOME/lib目录下
+memcached-session-manager-1.3.0.jar
+memcached-session-manager-tc7-1.6.3.jar
+memcached-session-manager-1.6.3.jar
+spymemcached-2.7.3.jar
+msm-javolution-serializer-1.6.3.jar
+
+1.2.修改$TOMCAT_HOME/conf/server.xml
+<Manager className="de.javakaffee.web.msm.MemcachedBackupSessionManager"
+    sticky = "false"
+    memcachedNodes="n1:10.204.79.186:11211"
+    requestUriIgnorePattern=".*\.(png|gif|jpg|css|js|do)$"
+    sessionBackupAsync="false"
+    sessionBackupTimeout="1800000"
+    copyCollectionsForSerialization="false"
+    transcoderFactoryClass="de.javakaffee.web.msm.serializer.javolution.JavolutionTranscoderFactory"
+    />
+这里的memcachedNodes是填写memcached节点,多个节点时可以以空隔分开，如:
+n1:localhost:11211 n2:localhost:11212
+sessionBackupTimeout的单位为分钟
+E:/java_codes/TestSession/WebContent 替换成你的WEB目录
+修改后重启两个TOMCAT即可,这个时候已经解决SESSION的共享问题.
+
+2.使用redis共享
+2.1.把jar拷贝到 $TOMCAT_HOME/lib/ 下面
+tomcat-redis-session-manager-1.*.jar
+commons-pool-1.6-bin.tar.gz
+jedis-2.*.0.jar
+2.2.修改$TOMCAT_HOME/conf/context.xml 
+在最后加上 
+<Valve className="com.radiadesign.catalina.session.RedisSessionHandlerValve" /> 
+<Manager className="com.radiadesign.catalina.session.RedisSessionManager"
+    host="localhost"
+    port="6379"
+    database="0"
+    maxInactiveInterval="60"
+    />

@@ -1,0 +1,29 @@
+﻿查看topic列表
+./kafka-topics.sh --zookeeper 10.206.19.228:2181 --list
+创建topic
+./kafka-topics.sh --create --zookeeper 10.206.19.228:2181 --topic test20190303 --partitions 1 --replication-factor 3
+查看topic信息
+./kafka-topics.sh  --zookeeper 10.206.19.228:2181 --topic test20190304 --describe
+查看topic分区偏移量大小
+./kafka-run-class.sh kafka.tools.GetOffsetShell --broker-list 10.27.93.66:9092,10.81.80.40:9092,10.25.252.238:9092 --topic SQ_MONITOR_MESSAGE  --time -1 --partitions 0
+查看topic消费进度
+./kafka-run-class.sh kafka.tools.ConsumerOffsetChecker --zookeeper 10.27.93.66:2181,10.81.80.40:2181,10.25.252.238:2181 --group 2 --topic SQ_MESSAGE_DELIVERY_SIMPLE
+控制台生产
+./kafka-console-producer.sh --broker-list 10.28.144.231:9092,10.28.144.246:9092,10.28.145.34:9092 --topic Q_PERSISTENT_CHANNEL
+控制台消费
+./kafka-console-consumer.sh  --zookeeper 10.28.144.231:2181,10.28.144.246:2181,10.28.145.34:2181  --topic Q_PERSISTENT_CHANNEL --from-beginning
+增加分区数
+./kafka-topics.sh --zookeeper 10.28.144.231:2181,10.28.144.246:2181,10.28.145.34:2181 --alter --topic Q_PERSISTENT_CHANNEL --partitions 6
+
+Kafka删除topic的命令是：
+${KAFKA_HOME}/bin/kafka-topics.sh --zookeeper [zookeeper server] --list
+${KAFKA_HOME}/bin/kafka-topics.sh --delete --zookeeper [zookeeper server]  --topic [topic name]
+
+./kafka-topics.sh --zookeeper 10.206.19.228:2181 --delete --topic test_acl
+
+./kafka-topics.sh --zookeeper 10.206.19.228:2181 --alter --topic test20190306 --partitions 3
+
+此时你若想真正删除它，可以如下操作：
+登录zookeeper客户端：命令：${ZK_HOME}/bin/zkCli.sh
+找到topic所在的目录：ls /brokers/topics
+找到要删除的topic，执行命令：rmr /brokers/topics/[topic name]即可，此时topic被彻底删除。
