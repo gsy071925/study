@@ -63,8 +63,7 @@ count：   打印次数
 
 ## 示例
 jstat -gc PID 5000 20
-
-展示说明
+### 主要字段说明
 S0C： 年轻代第一个survivor的容量（字节）  
 S1C： 年轻代第二个survivor的容量（字节）  
 S0U： 年轻代第一个survivor已使用的容量（字节）  
@@ -73,8 +72,6 @@ EC：  年轻代中Eden的空间（字节）
 EU：  年代代中Eden已使用的空间（字节）  
 OC：  老年代的容量（字节）  
 OU：  老年代中已使用的空间（字节）  
-PC：  永久代的容量  
-PU：  永久代已使用的容量  
 YGC： 从应用程序启动到采样时年轻代中GC的次数  
 YGCT：从应用程序启动到采样时年轻代中GC所使用的时间（单位：S）  
 FGC： 从应用程序启动到采样时老年代中GC（FULL GC）的次数  
@@ -87,12 +84,13 @@ FGCT：从应用程序启动到采样时老年代中GC所使用的时间（单�
 jinfo可以用来查看正在运行的java运用程序的扩展参数，甚至支持在运行时动态地更改部分参数。
 ## 用法
 基本使用语法如下： jinfo -<option> <pid> ，其中option可以为以下信息：
--flag<name>: 打印指定java虚拟机的参数值  
+-flag <name>: 打印指定java虚拟机的参数值  
 -flag [+|-]<name>：设置或取消指定java虚拟机参数的布尔值  
 -flag <name>=<value>：设置指定java虚拟机的参数的值
 ## 示例
 /data/program/jdk/bin/jinfo -flag UseConcMarkSweepGC {pid}  
 /data/program/jdk/bin/jinfo -flag -UseConcMarkSweepGC {pid}  
 /data/program/jdk/bin/jinfo -flag SurvivorRatio=8 {pid}
+/data/program/jdk/bin/jinfo -flag CMSInitiatingOccupancyFraction=65 25770
 
 # jcmd
